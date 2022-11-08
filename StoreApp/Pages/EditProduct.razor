@@ -1,0 +1,75 @@
+﻿@page "/products/{ProductId}"
+
+<PageTitle>Create Product</PageTitle>
+
+@using StoreApp.Models
+@using StoreApp.Services
+
+@inject ProductsService ProductsService
+@inject NavigationManager NavigationManager
+
+<EditForm Model="model">
+    <h1>Edit Product</h1>
+    <MudPaper Class="pa-4 mb-4 w-25">
+
+        <MudTextField Class="m-1" Label="Product Name" @bind-Value="@model.Name"></MudTextField>
+        <MudTextField Class="m-1" Label="Product Discount" @bind-Value="@model.Discount"></MudTextField>
+        <MudSelect MultiSelection="true" Class="m-1" Label="Product Type" @bind-SelectedValues="@model.Categories">
+            @foreach (ProductType productType in Categories)
+            {
+                <MudSelectItem Value="@productType">@productType.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudButton HtmlTag="label"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Filled.CloudUpload"
+                   for="fileInput">
+            Upload Picture
+        </MudButton>
+        <InputFile id="fileInput" OnChange="UploadFiles" hidden multiple accept=".jpg, .jpeg, .png" />
+
+        @if (file != null)
+        {
+            @file.Name <code>@file.Size bytes</code>
+        }
+    </MudPaper>
+
+    <MudButton Variant="Variant.Filled" OnClick="@OnUpdate">Update</MudButton>
+    <MudButton Variant="Variant.Filled" OnClick="@OnBack">Back</MudButton>
+
+</EditForm>
+
+@code
+{
+    [Parameter]
+    public string ProductId { get; set; }
+    async Task OnUpdate()
+    {
+        model.Picture = file;
+
+        await ProductsService.UpdateProduct(model);
+
+        NavigationManager.NavigateTo("/products/");
+    }
+    void OnBack()
+    {
+        NavigationManager.NavigateTo("/products/");
+    }
+    IEnumerable<ProductType> Categories = Array.Empty<ProductType>();
+    ProductModel model = new ProductModel();
+
+    IBrowserFile file;
+    private void UploadFiles(InputFileChangeEventArgs e)
+    {
+        file = e.GetMultipleFiles().FirstOrDefault();
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        model = await ProductsService.GetProduct(int.Parse(ProductId));
+
+        Categories = await ProductsService.GetCategories();
+    }
+}

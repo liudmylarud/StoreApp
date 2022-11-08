@@ -1,0 +1,59 @@
+﻿@page "/products"
+
+<PageTitle>Weather forecast</PageTitle>
+
+@using StoreApp.Models
+@using StoreApp.Services
+@using System.Text.Json
+
+@inject ProductsService ProductsService
+@inject NavigationManager NavigationManager
+
+
+<MudIconButton OnClick="OnAddClick" Icon="@Icons.Material.Filled.Add" aria-label="Add"></MudIconButton>
+
+<MudTable Items="@Products" OnRowClick="OnRowClick" T="ProductModel">
+    <HeaderContent>
+        <MudTh>Id</MudTh>
+        <MudTh>Name</MudTh>
+        <MudTh>Categories</MudTh>
+        <MudTh>Discount</MudTh>
+        <MudTh>Delete</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Id">@context.Id</MudTd>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Categories">@string.Join(",", context.Categories.Select(c=> c.Name))</MudTd>
+        <MudTd DataLabel="Discount">@context.Discount</MudTd>
+        
+
+        <MudTd><MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => OnDelete(context.Id))"></MudIconButton></MudTd>
+
+    </RowTemplate>
+</MudTable>
+
+@code
+{
+    IEnumerable<ProductModel> Products = Array.Empty<ProductModel>();
+
+    protected async override Task OnInitializedAsync()
+    {
+        Products = await ProductsService.GetProducts();
+    }
+
+
+    async Task OnDelete(int productId)
+    {
+        await ProductsService.DeleteProduct(productId);
+
+        Products = await ProductsService.GetProducts();
+    }
+
+    void OnRowClick(TableRowClickEventArgs<ProductModel> eventArgs) {
+        NavigationManager.NavigateTo($"/products/{eventArgs.Item.Id}");
+    }
+
+    void OnAddClick() {
+        NavigationManager.NavigateTo("/products/create");
+    }
+}
